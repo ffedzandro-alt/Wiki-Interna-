@@ -1,0 +1,718 @@
+<div class="doc-dashboard">
+  <section class="doc-panel doc-month-panel">
+    <h2>Documentos adicionados este mês</h2>
+    <div id="monthDocuments">
+      <p class="doc-empty">Ainda não foram adicionados documentos este mês.</p>
+    </div>
+  </section>
+
+  <button type="button" class="doc-add-card" id="openDocModal">
+    <span>+</span>
+    <strong>Adicionar documento</strong>
+    <p>Clique para adicionar um novo documento à documentação interna.</p>
+  </button>
+
+  <section class="doc-panel">
+    <h2>Documentos eliminados</h2>
+    <div id="deletedDocuments">
+      <p class="doc-empty">Nenhum documento eliminado.</p>
+    </div>
+  </section>
+
+  <section class="doc-panel">
+    <h2>Documentos recentes</h2>
+    <div id="recentDocuments">
+      <p class="doc-empty">Ainda não há documentos carregados.</p>
+    </div>
+  </section>
+
+  <section class="doc-panel doc-categories-panel">
+    <h2>Categorias</h2>
+    <div class="doc-category-grid">
+      <div class="doc-category-card" data-category="documentos">
+        <span>📁</span>
+        <strong>Documentos</strong>
+        <small><b id="countDocumentos">0</b> documentos</small>
+      </div>
+      <div class="doc-category-card" data-category="formularios">
+        <span>📄</span>
+        <strong>Formulários</strong>
+        <small><b id="countFormularios">0</b> documentos</small>
+      </div>
+      <div class="doc-category-card" data-category="outros">
+        <span>🏷</span>
+        <strong>Outros</strong>
+        <small><b id="countOutros">0</b> documentos</small>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Modal: Adicionar documento -->
+<div class="doc-modal" id="docModal" hidden>
+  <div class="doc-modal-box">
+    <div class="doc-modal-header">
+      <h2>Novo Documento</h2>
+      <button type="button" id="closeDocModal">×</button>
+    </div>
+    <form id="docUploadForm">
+      <label>Título <span>*</span>
+        <input type="text" id="docTitle" placeholder="Digite o título do documento" required>
+      </label>
+      <label>Descrição <span>*</span>
+        <textarea id="docDescription" placeholder="Digite a descrição do documento" required></textarea>
+      </label>
+      <label>Categoria <span>*</span>
+        <select id="docCategory" required>
+          <option value="documentos">Documentos</option>
+          <option value="formularios">Formulários</option>
+          <option value="outros">Outros</option>
+        </select>
+      </label>
+      <label>Documento <span>*</span>
+        <input type="file" id="docFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.txt" required>
+        <small>Formatos aceites: PDF, DOC, DOCX, XLS, XLSX, imagens e TXT</small>
+      </label>
+      <div class="doc-modal-actions">
+        <button type="button" class="doc-btn" id="cancelDocModal">Cancelar</button>
+        <button type="submit" class="doc-btn primary">Guardar Documento</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Ver documentos por categoria -->
+<div class="doc-modal" id="categoryModal" hidden>
+  <div class="doc-modal-box doc-modal-large">
+    <div class="doc-modal-header">
+      <h2 id="categoryModalTitle">Documentos</h2>
+      <button type="button" id="closeCategoryModal">×</button>
+    </div>
+    <div class="doc-modal-toolbar">
+      <span id="categoryModalCount">0 documentos</span>
+    </div>
+    <div class="doc-modal-body" id="categoryDocumentsList"></div>
+  </div>
+</div>
+
+<style>
+.doc-dashboard {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 22px;
+  max-width: 1400px;
+  margin: 34px auto;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #06264a;
+}
+
+.doc-panel,
+.doc-add-card {
+  border: 1px solid #ccd6e2;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.doc-panel h2 {
+  margin: 0;
+  padding: 18px 22px;
+  border-bottom: 1px solid #ccd6e2;
+  font-size: 22px;
+  color: #002b55;
+}
+
+.doc-panel ul {
+  margin: 0;
+  padding: 18px 26px;
+}
+
+.doc-empty {
+  padding: 20px 22px;
+  margin: 0;
+  color: #58677a;
+  font-style: italic;
+}
+
+.doc-add-card {
+  min-height: 300px;
+  cursor: pointer;
+  text-align: center;
+  padding: 44px 28px;
+  color: #002b55;
+  border: none;
+  transition: background 0.2s;
+}
+
+.doc-add-card:hover { background: #f5f8fc; }
+
+.doc-add-card span {
+  display: block;
+  font-size: 96px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.doc-add-card strong {
+  display: block;
+  font-size: 24px;
+  margin: 12px 0 16px;
+}
+
+.doc-categories-panel { grid-column: 1 / -1; }
+
+.doc-category-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  padding: 20px;
+}
+
+.doc-category-card {
+  border: 1px solid #ccd6e2;
+  border-radius: 6px;
+  padding: 22px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.doc-category-card:hover {
+  background: #f0f4f8;
+  border-color: #07345f;
+}
+
+.doc-category-card span { display: block; font-size: 34px; margin-bottom: 10px; }
+.doc-category-card strong,
+.doc-category-card small { display: block; }
+
+/* --- Lista de documentos --- */
+.doc-list-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e3e8ef;
+  transition: background 0.15s;
+}
+
+.doc-list-item:last-child { border-bottom: none; }
+.doc-list-item:hover { background: #f5f7fa; }
+
+.doc-list-icon {
+  width: 46px;
+  height: 48px;
+  border-radius: 5px;
+  background: #07345f;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.doc-list-info { flex: 1; min-width: 0; }
+.doc-list-info strong { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-list-info small { display: block; font-size: 12px; color: #58677a; margin-top: 2px; }
+
+.doc-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.doc-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #07345f;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background 0.15s;
+  line-height: 1;
+}
+
+.doc-action-btn:hover { background: #e3e8ef; }
+.doc-action-btn.delete { color: #c62828; }
+.doc-action-btn.restore { color: #2e7d32; }
+
+/* Tag de expiração */
+.doc-expiry-tag {
+  font-size: 11px;
+  color: #999;
+  white-space: nowrap;
+}
+
+.doc-expiry-tag.urgent { color: #c62828; font-weight: 700; }
+
+/* --- Modais --- */
+.doc-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0,0,0,0.48);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.doc-modal[hidden] { display: none; }
+
+.doc-modal-box {
+  width: 100%;
+  max-width: 560px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+
+.doc-modal-large {
+  max-width: 820px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.doc-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 22px;
+  border-bottom: 1px solid #ccd6e2;
+  flex-shrink: 0;
+}
+
+.doc-modal-header h2 { margin: 0; font-size: 20px; }
+
+.doc-modal-header button {
+  border: 0;
+  background: transparent;
+  font-size: 28px;
+  cursor: pointer;
+  color: #555;
+  line-height: 1;
+}
+
+/* Toolbar tipo explorador de ficheiros */
+.doc-modal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 22px;
+  background: #f5f7fa;
+  border-bottom: 1px solid #ccd6e2;
+  font-size: 13px;
+  color: #58677a;
+  flex-shrink: 0;
+}
+
+.doc-modal-body {
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Cabeçalho da tabela no modal */
+.doc-table-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 20px;
+  background: #eef1f5;
+  border-bottom: 1px solid #ccd6e2;
+  font-size: 12px;
+  font-weight: 700;
+  color: #444;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.doc-table-header .col-icon { width: 46px; flex-shrink: 0; }
+.doc-table-header .col-name { flex: 1; }
+.doc-table-header .col-cat { width: 100px; flex-shrink: 0; }
+.doc-table-header .col-size { width: 70px; flex-shrink: 0; text-align: right; }
+.doc-table-header .col-actions { width: 60px; flex-shrink: 0; }
+
+/* Itens no modal alinhados com o header */
+.doc-modal-body .doc-list-item .doc-list-info { display: flex; flex-direction: column; }
+.doc-modal-body .doc-list-item .col-cat { width: 100px; flex-shrink: 0; font-size: 12px; color: #58677a; }
+.doc-modal-body .doc-list-item .col-size { width: 70px; flex-shrink: 0; font-size: 12px; color: #58677a; text-align: right; }
+
+/* Formulário */
+#docUploadForm { padding: 22px; }
+#docUploadForm label { display: block; margin-bottom: 18px; font-weight: 700; }
+#docUploadForm label span { color: #c62828; }
+#docUploadForm input,
+#docUploadForm textarea,
+#docUploadForm select {
+  display: block; width: 100%; margin-top: 8px;
+  padding: 11px; border: 1px solid #cfd7e3;
+  border-radius: 5px; font: inherit; box-sizing: border-box;
+}
+#docUploadForm textarea { min-height: 90px; resize: vertical; }
+#docUploadForm small { display: block; margin-top: 7px; color: #657286; font-weight: 400; }
+
+.doc-modal-actions {
+  display: flex; justify-content: flex-end; gap: 10px;
+  border-top: 1px solid #ccd6e2; padding-top: 18px;
+}
+
+.doc-btn {
+  border: 1px solid #b8c2d0; background: #fff; color: #0f1f33;
+  padding: 10px 18px; border-radius: 5px; font-weight: 700; cursor: pointer;
+}
+.doc-btn.primary { background: #06264a; color: #fff; border-color: #06264a; }
+
+@media (max-width: 900px) {
+  .doc-dashboard { grid-template-columns: 1fr; }
+  .doc-category-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<script>
+(function () {
+  const STORAGE_KEY   = "techbase_documentos";
+  const FILES_KEY     = "techbase_ficheiros";
+  const DELETED_KEY   = "techbase_deletados";
+  const DELETED_FILES_KEY = "techbase_deletados_ficheiros";
+  const MONTH_KEY     = "techbase_documentos_mes";
+  const EXPIRY_DAYS   = 7;
+
+  /* ── elementos ── */
+  const modal          = document.getElementById("docModal");
+  const openBtn        = document.getElementById("openDocModal");
+  const closeBtn       = document.getElementById("closeDocModal");
+  const cancelBtn      = document.getElementById("cancelDocModal");
+  const form           = document.getElementById("docUploadForm");
+
+  const categoryModal      = document.getElementById("categoryModal");
+  const closeCategoryBtn   = document.getElementById("closeCategoryModal");
+  const categoryModalTitle = document.getElementById("categoryModalTitle");
+  const categoryModalCount = document.getElementById("categoryModalCount");
+  const categoryDocsList   = document.getElementById("categoryDocumentsList");
+
+  const recentDocuments  = document.getElementById("recentDocuments");
+  const monthDocuments   = document.getElementById("monthDocuments");
+  const deletedDocuments = document.getElementById("deletedDocuments");
+
+  const countDocumentos  = document.getElementById("countDocumentos");
+  const countFormularios = document.getElementById("countFormularios");
+  const countOutros      = document.getElementById("countOutros");
+
+  /* ── init ── */
+  purgeExpiredDeleted();
+  checkMonthReset();
+  renderAll();
+
+  /* ── eventos gerais ── */
+  openBtn.addEventListener("click", () => { modal.hidden = false; });
+  closeBtn.addEventListener("click", closeAddModal);
+  cancelBtn.addEventListener("click", closeAddModal);
+  closeCategoryBtn.addEventListener("click", () => { categoryModal.hidden = true; });
+
+  document.querySelectorAll(".doc-category-card").forEach(card => {
+    card.addEventListener("click", () => openCategoryModal(card.dataset.category));
+  });
+
+  /* ── submissão ── */
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const title       = document.getElementById("docTitle").value.trim();
+    const description = document.getElementById("docDescription").value.trim();
+    const category    = document.getElementById("docCategory").value;
+    const fileInput   = document.getElementById("docFile");
+    const file        = fileInput.files[0];
+
+    if (!title || !description || !category || !file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+      const docs  = getDocs();
+      const files = getFiles();
+      const id    = Date.now();
+
+      docs.unshift({ id, title, description, category,
+        fileName: file.name,
+        type: getExt(file.name),
+        mimeType: file.type,
+        size: fmtSize(file.size),
+        date: new Date().toISOString()
+      });
+
+      files[id] = ev.target.result;
+
+      save(STORAGE_KEY, docs);
+      save(FILES_KEY, files);
+
+      form.reset();
+      closeAddModal();
+      renderAll();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  /* ════════════════════════════════
+     RENDER
+  ════════════════════════════════ */
+  function renderAll() {
+    const docs = getDocs();
+
+    renderMainList(recentDocuments, docs.slice(0, 3));
+    renderMainList(monthDocuments, docs);
+    renderDeletedList();
+
+    countDocumentos.textContent  = docs.filter(d => d.category === "documentos").length;
+    countFormularios.textContent = docs.filter(d => d.category === "formularios").length;
+    countOutros.textContent      = docs.filter(d => d.category === "outros").length;
+  }
+
+  /* Lista principal (mês / recentes) */
+  function renderMainList(container, docs) {
+    container.innerHTML = "";
+    if (!docs.length) {
+      container.innerHTML = '<p class="doc-empty">Ainda não há documentos carregados.</p>';
+      return;
+    }
+    docs.forEach(doc => container.appendChild(buildMainItem(doc)));
+  }
+
+  function buildMainItem(doc) {
+    const item = document.createElement("div");
+    item.className = "doc-list-item";
+    item.innerHTML =
+      `<span class="doc-list-icon">${esc(doc.type)}</span>
+       <div class="doc-list-info">
+         <strong>${esc(doc.title)}</strong>
+         <small>${getCatName(doc.category)} · ${esc(doc.size)}</small>
+       </div>
+       <div class="doc-list-actions">
+         <button class="doc-action-btn" title="Abrir / Descarregar">⇩</button>
+         <button class="doc-action-btn delete" title="Eliminar">🗑</button>
+       </div>`;
+
+    item.querySelector(".doc-action-btn:not(.delete)").addEventListener("click", e => {
+      e.stopPropagation(); downloadDoc(doc);
+    });
+    item.querySelector(".doc-action-btn.delete").addEventListener("click", e => {
+      e.stopPropagation(); deleteDoc(doc.id);
+    });
+    item.addEventListener("click", () => openCategoryModal(doc.category));
+    return item;
+  }
+
+  /* Lista de eliminados */
+  function renderDeletedList() {
+    deletedDocuments.innerHTML = "";
+    const deleted = getDeleted();
+    if (!deleted.length) {
+      deletedDocuments.innerHTML = '<p class="doc-empty">Nenhum documento eliminado.</p>';
+      return;
+    }
+    deleted.forEach(doc => deletedDocuments.appendChild(buildDeletedItem(doc)));
+  }
+
+  function buildDeletedItem(doc) {
+    const item = document.createElement("div");
+    item.className = "doc-list-item";
+
+    const daysLeft = getDaysLeft(doc.deletedAt);
+    const urgentClass = daysLeft <= 2 ? " urgent" : "";
+
+    item.innerHTML =
+      `<span class="doc-list-icon" style="background:#9e9e9e">${esc(doc.type)}</span>
+       <div class="doc-list-info">
+         <strong>${esc(doc.title)}</strong>
+         <small>${getCatName(doc.category)} · ${esc(doc.size)}</small>
+       </div>
+       <span class="doc-expiry-tag${urgentClass}">${daysLeft}d</span>
+       <div class="doc-list-actions">
+         <button class="doc-action-btn restore" title="Restaurar">↩</button>
+       </div>`;
+
+    item.querySelector(".doc-action-btn.restore").addEventListener("click", e => {
+      e.stopPropagation(); restoreDoc(doc.id);
+    });
+    return item;
+  }
+
+  /* ════════════════════════════════
+     MODAL DE CATEGORIA
+  ════════════════════════════════ */
+  function openCategoryModal(category) {
+    const docs = getDocs().filter(d => d.category === category);
+    categoryModalTitle.textContent = getCatName(category);
+    categoryModalCount.textContent = `${docs.length} documento(s)`;
+    categoryDocsList.innerHTML = "";
+
+    /* cabeçalho tipo explorador */
+    const header = document.createElement("div");
+    header.className = "doc-table-header";
+    header.innerHTML =
+      `<span class="col-icon"></span>
+       <span class="col-name">Nome</span>
+       <span class="col-cat">Categoria</span>
+       <span class="col-size">Tamanho</span>
+       <span class="col-actions"></span>`;
+    categoryDocsList.appendChild(header);
+
+    if (!docs.length) {
+      categoryDocsList.innerHTML += '<p class="doc-empty">Nenhum documento nesta categoria.</p>';
+    } else {
+      docs.forEach(doc => categoryDocsList.appendChild(buildModalItem(doc)));
+    }
+
+    categoryModal.hidden = false;
+  }
+
+  function buildModalItem(doc) {
+    const item = document.createElement("div");
+    item.className = "doc-list-item";
+    item.style.cursor = "pointer";
+    item.innerHTML =
+      `<span class="doc-list-icon">${esc(doc.type)}</span>
+       <div class="doc-list-info" style="flex:1;min-width:0">
+         <strong style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(doc.title)}</strong>
+         <small>${esc(doc.fileName)}</small>
+       </div>
+       <span class="col-cat" style="width:100px;flex-shrink:0;font-size:12px;color:#58677a">${getCatName(doc.category)}</span>
+       <span class="col-size" style="width:70px;flex-shrink:0;font-size:12px;color:#58677a;text-align:right">${esc(doc.size)}</span>
+       <div class="doc-list-actions">
+         <button class="doc-action-btn" title="Descarregar">⇩</button>
+         <button class="doc-action-btn delete" title="Eliminar">🗑</button>
+       </div>`;
+
+    item.querySelector(".doc-action-btn:not(.delete)").addEventListener("click", e => {
+      e.stopPropagation(); downloadDoc(doc);
+    });
+    item.querySelector(".doc-action-btn.delete").addEventListener("click", e => {
+      e.stopPropagation();
+      deleteDoc(doc.id);
+      /* atualiza o modal sem fechar */
+      openCategoryModal(doc.category);
+    });
+    item.addEventListener("click", () => downloadDoc(doc));
+    return item;
+  }
+
+  /* ════════════════════════════════
+     AÇÕES: DELETE / RESTORE / DOWNLOAD
+  ════════════════════════════════ */
+  function deleteDoc(id) {
+    const docs  = getDocs();
+    const files = getFiles();
+    const idx   = docs.findIndex(d => d.id === id);
+    if (idx === -1) return;
+
+    const [doc] = docs.splice(idx, 1);
+    doc.deletedAt = new Date().toISOString();
+
+    const deleted      = getDeleted();
+    const deletedFiles = getDeletedFiles();
+
+    deleted.unshift(doc);
+    if (files[id]) { deletedFiles[id] = files[id]; delete files[id]; }
+
+    save(STORAGE_KEY, docs);
+    save(FILES_KEY, files);
+    save(DELETED_KEY, deleted);
+    save(DELETED_FILES_KEY, deletedFiles);
+    renderAll();
+  }
+
+  function restoreDoc(id) {
+    const deleted      = getDeleted();
+    const deletedFiles = getDeletedFiles();
+    const idx          = deleted.findIndex(d => d.id === id);
+    if (idx === -1) return;
+
+    const [doc] = deleted.splice(idx, 1);
+    delete doc.deletedAt;
+
+    const docs  = getDocs();
+    const files = getFiles();
+
+    docs.unshift(doc);
+    if (deletedFiles[id]) { files[id] = deletedFiles[id]; delete deletedFiles[id]; }
+
+    save(STORAGE_KEY, docs);
+    save(FILES_KEY, files);
+    save(DELETED_KEY, deleted);
+    save(DELETED_FILES_KEY, deletedFiles);
+    renderAll();
+  }
+
+  function downloadDoc(doc) {
+    const files        = getFiles();
+    const deletedFiles = getDeletedFiles();
+    const data         = files[doc.id] || deletedFiles[doc.id];
+    if (data) {
+      const a = document.createElement("a");
+      a.href = data; a.download = doc.fileName;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+    } else {
+      alert("Ficheiro não encontrado.");
+    }
+  }
+
+  /* ════════════════════════════════
+     HELPERS
+  ════════════════════════════════ */
+  function purgeExpiredDeleted() {
+    const deleted      = getDeleted();
+    const deletedFiles = getDeletedFiles();
+    const now          = Date.now();
+    const fresh        = deleted.filter(d => {
+      const age = (now - new Date(d.deletedAt).getTime()) / 86400000;
+      if (age >= EXPIRY_DAYS) { delete deletedFiles[d.id]; return false; }
+      return true;
+    });
+    save(DELETED_KEY, fresh);
+    save(DELETED_FILES_KEY, deletedFiles);
+  }
+
+  function getDaysLeft(deletedAt) {
+    const elapsed = (Date.now() - new Date(deletedAt).getTime()) / 86400000;
+    return Math.max(0, Math.ceil(EXPIRY_DAYS - elapsed));
+  }
+
+  function checkMonthReset() {
+    const cur   = new Date();
+    const month = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,"0")}`;
+    if (localStorage.getItem(MONTH_KEY) && localStorage.getItem(MONTH_KEY) !== month) {
+      save(STORAGE_KEY, []);
+      save(FILES_KEY, {});
+    }
+    localStorage.setItem(MONTH_KEY, month);
+  }
+
+  function closeAddModal() { modal.hidden = true; }
+
+  function getDocs()        { return load(STORAGE_KEY, []); }
+  function getFiles()       { return load(FILES_KEY, {}); }
+  function getDeleted()     { return load(DELETED_KEY, []); }
+  function getDeletedFiles(){ return load(DELETED_FILES_KEY, {}); }
+
+  function load(key, def) {
+    try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; }
+  }
+  function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+  function getCatName(c) {
+    return c === "formularios" ? "Formulários" : c === "outros" ? "Outros" : "Documentos";
+  }
+  function getExt(name) {
+    const p = name.split("."); return p.length > 1 ? p.pop().toUpperCase() : "DOC";
+  }
+  function fmtSize(b) {
+    if (b < 1024) return b + " B";
+    if (b < 1048576) return Math.round(b/1024) + " KB";
+    return (b/1048576).toFixed(1) + " MB";
+  }
+  function esc(t) {
+    const d = document.createElement("div"); d.textContent = t || ""; return d.innerHTML;
+  }
+})();
+</script>
